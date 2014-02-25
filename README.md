@@ -1,4 +1,4 @@
 MKMPriceCalculator
 ==================
 
-Application managing buying chart using neural network for calculation.
+Application managing buying chart using biological algorithm for calculation.
