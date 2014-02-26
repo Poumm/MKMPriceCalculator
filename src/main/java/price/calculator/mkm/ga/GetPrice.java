@@ -1,5 +1,6 @@
 package price.calculator.mkm.ga;
 
+import static price.calculator.mkm.parsing.ParseHTMLOffer.parseOffer;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -17,11 +18,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import price.calculator.mkm.models.Offer;
 
@@ -56,10 +52,11 @@ public class GetPrice {
 			}
 		};
 		HttpsURLConnection.setDefaultHostnameVerifier( allHostsValid );
-		proxy = new Proxy( Proxy.Type.HTTP, new InetSocketAddress( "avcomws1.groupe-es.net", 8080 ) );
+		//proxy = new Proxy( Proxy.Type.HTTP, new InetSocketAddress( "avcomws1.groupe-es.net", 8080 ) );
 	}
 
 	public Offer getPrices(String cardName, String merchantID) throws IOException {
+		
 		URL page = new URL( urlCreator( cardName, merchantID ) );
 		// HttpsURLConnection yc = (HttpsURLConnection)page.openConnection(proxy);
 		HttpsURLConnection yc = (HttpsURLConnection) page.openConnection();
@@ -72,63 +69,11 @@ public class GetPrice {
 		}
 		br.close();
 
-		double bestPrice = Double.MAX_VALUE;
-		int stockNumber = 0;
+	
 
-		Document doc = Jsoup.parse( String.valueOf( tmp ) );
-		Elements india = doc.select( "div.row" );
-		for ( Element table : doc.select( "table" ) ) {
-			for ( Element row : table.select( "tr" ) ) {
-				Elements tds = row.select( "td" );
-				if ( tds.size() == 12 ) {
-					if ( nameValid( tds.get( 2 ).text(), cardName ) && languageValid( tds.get( 5 ).html() ) && qualityValid( tds.get( 6 ).html() ) ) {
-						String stock = tds.get( 10 ).text();
-						String price = tds.get( 9 ).text();
-						if ( price.contains( "PU:" ) ) {
-							price = price.substring( price.indexOf( ":" ) + 2, price.length() - 2 );
-						}
-						else {
-							price = price.substring( 0, tds.get( 9 ).text().length() - 2 );
-
-						}
-						price = price.replaceAll( ",", "." );
-						Double priced = Double.parseDouble( price );
-
-						if ( priced < bestPrice ) {
-							bestPrice = priced;
-							stockNumber = Integer.parseInt( stock );
-						}
-					}
-				}
-			}
-		}
-
-		if ( bestPrice == Double.MAX_VALUE )
-			bestPrice = 0.0;
-		Offer offer = new Offer( cardName, bestPrice, stockNumber );
-
-		return offer;
+		return parseOffer(tmp, cardName);
 	}
 
-	private boolean nameValid(String line, String cardName) {
-		if ( line.equals( cardName ) )
-			return true;
-		return false;
-	}
-
-	private boolean languageValid(String line) {
-		if ( line.contains( "Anglais" ) || line.contains( "Francais" ) ) {
-			return true;
-		}
-		return false;
-	}
-
-	private boolean qualityValid(String line) {
-		if ( line.contains( "Mint" ) || line.contains( "Near Mint" ) ) {
-			return true;
-		}
-		return false;
-	}
 
 	private String urlCreator(String cardName, String merchantID) {
 		String url = "https://fr.magiccardmarket.eu/?mainPage=browseUserProducts&idCategory=1&idUser=";

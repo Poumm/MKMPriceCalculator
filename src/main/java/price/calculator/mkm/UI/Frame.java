@@ -1,5 +1,6 @@
 package price.calculator.mkm.UI;
 
+import static price.calculator.mkm.parsing.ParseCards.parseCards;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -245,28 +246,13 @@ public class Frame extends JFrame {
 		( (DefaultTableModel) priceTable.getModel() ).fireTableDataChanged();
 	}
 
-	private void parseCards() {
-		this.cardList = new ArrayList<Card>();
-		String[] lines = textPane.getText().split( System.getProperty( "line.separator" ) );
-		for ( int i = 0; i < lines.length; i++ ) {
-			String line = lines[i];
-			if ( !line.equals( "" ) ) {
-				line = line.trim();
-				line = line.replaceAll( "^\\s*", "" );
-				String number = line.substring( 0, line.indexOf( "x" ) );
-				String name = line.substring( line.indexOf( "x" ) + 2, line.length() );
-				cardList.add( new Card( name, Integer.parseInt( number ) ) );
-			}
-		}
-	}
-
 	private void findPrices() throws IOException {
 		
 		Thread t = new Thread( new Runnable() {
 
 			public void run() {
 				// TODO Auto-generated method stub
-				parseCards();
+				cardList = parseCards(textPane.getText());
 				createPriceTable();
 				validate();
 
